@@ -7,7 +7,7 @@
   "scripts": {
     "build": "node build.mjs"
   },
-  "main": "src/ExamplePlugin.ts",
+  "main": "src/IdleAlert.ts",
   "devDependencies": {
     "@highlite/plugin-api": "^1.0.13",
     "esbuild": "^0.25.8",
