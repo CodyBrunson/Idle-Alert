@@ -1,8 +1,16 @@
 import {Plugin, SettingsTypes} from "@highlite/plugin-api";
 import { NotificationManager, SoundManager, ActionState } from "@highlite/plugin-api";
 import IdleOverlay from "./IdleOverlay";
+import idleSound from "../resources/sounds/level-up-3-199576.mp3";
 
 class IdleAlert extends Plugin {
+    start(): void {
+        this.log("Started");
+    }
+    stop(): void {
+        this.log("Stopped");
+    }
+
     private notificationManager: NotificationManager =
         new NotificationManager();
     private soundManager: SoundManager = new SoundManager();
@@ -55,12 +63,6 @@ class IdleAlert extends Plugin {
 
     init(): void {
         this.log('Initialized');
-    }
-    start(): void {
-        this.log('Started');
-    }
-    stop(): void {
-        this.log('Stopped');
     }
 
     GameLoop_update(...args: any) {
@@ -122,7 +124,7 @@ class IdleAlert extends Plugin {
             }
 
             this.soundManager.playSound(
-                'https://cdn.pixabay.com/download/audio/2024/04/01/audio_e939eebbb1.mp3?filename=level-up-3-199576.mp3',
+                idleSound,
                 (this.settings.volume!.value as number) / 100
             );
 
