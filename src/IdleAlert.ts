@@ -1,7 +1,7 @@
 import {Plugin, SettingsTypes} from "@highlite/plugin-api";
 import { NotificationManager, SoundManager, ActionState } from "@highlite/plugin-api";
 import IdleOverlay from "./IdleOverlay";
-import idleSound from "../resources/sounds/level-up-3-199576.mp3";
+import idleSound from "../resources/sounds/idle_alert.mp3";
 
 class IdleAlert extends Plugin {
     start(): void {
