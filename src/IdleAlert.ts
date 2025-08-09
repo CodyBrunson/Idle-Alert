@@ -4,13 +4,6 @@ import IdleOverlay from "./IdleOverlay";
 import idleSound from "../resources/sounds/idle_alert.mp3";
 
 class IdleAlert extends Plugin {
-    start(): void {
-        this.log("Started");
-    }
-    stop(): void {
-        this.log("Stopped");
-    }
-
     private notificationManager: NotificationManager =
         new NotificationManager();
     private soundManager: SoundManager = new SoundManager();
@@ -46,6 +39,13 @@ class IdleAlert extends Plugin {
         };
     }
 
+    start(): void {
+        this.log("Started");
+    }
+    stop(): void {
+        this.log("Stopped");
+    }
+
     ignoredStates: ActionState[] = [
         ActionState.BankingState,
         ActionState.ClimbSameMapLevelState,
@@ -58,11 +58,53 @@ class IdleAlert extends Plugin {
     actionState: number = ActionState.IdleState;
     idleTicks: number = 0;
     shouldTick: boolean = false;
+    publicMessages: HTMLElement | null = null;
+    chatObserver: MutationObserver | null = null;
+    alertMessages: string[] = [
+        'WARNING - You will be logged out in 1 minute due to inactivity'
+    ];
 
     idleOverlay: IdleOverlay = new IdleOverlay();
 
     init(): void {
         this.log('Initialized');
+        this.setupChatObserver();
+    }
+
+    private setupChatObserver(): void {
+        this.publicMessages = document.querySelector("#hs-public-message-list")
+
+        if(!this.publicMessages) {
+            return
+        }
+
+        const config: MutationObserverInit = {
+            childList: true,
+            subtree: true,
+        };
+
+        const callback: MutationCallback = (mutationsList: MutationRecord[], observer: MutationObserver) => {
+            for(const mutation of mutationsList) {
+                if(mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                    for(const node of mutation.addedNodes) {
+                        if(node instanceof HTMLElement && node.tagName === "LI") {
+                            const messageContainer = node.querySelector(".hs-chat-menu__message-text-container");
+                            if(messageContainer) {
+                                const messageText = messageContainer.textContent?.trim();
+                                if(messageText !== undefined) {
+                                    if(this.alertMessages.includes(messageText)) {
+                                        this.createAlert(messageText);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        this.chatObserver = new MutationObserver(callback);
+        this.chatObserver.observe(this.publicMessages, config);
     }
 
     GameLoop_update(...args: any) {
@@ -106,31 +148,41 @@ class IdleAlert extends Plugin {
             this.shouldTick
         ) {
             this.idleTicks++;
+            this.log(this.idleTicks);
         } else {
             this.idleTicks = 0;
         }
 
         if (this.idleTicks > (this.settings.activationTicks!.value as number)) {
-            if (this.settings.notification!.value) {
-                ``;
-                this.notificationManager.createNotification(
-                    `${player._name} is idle!`
-                );
-            }
 
-            // TODO: settings.notificationOverlay?
-            if (this.settings.idleOverlay!.value) {
-                this.idleOverlay.show();
-            }
-
-            this.soundManager.playSound(
-                idleSound,
-                (this.settings.volume!.value as number) / 100
-            );
+            this.createAlert('is Idle!')
 
             this.actionState = 0;
             this.idleTicks = 0;
         }
+    }
+
+    private createAlert(message: string) {
+        const player = this.gameHooks.EntityManager.Instance._mainPlayer;
+
+        if (player === undefined) {
+            return;
+        }
+
+        if (this.settings.notification!.value) {
+            this.notificationManager.createNotification(
+                `${player._name} - ${message}`
+            );
+        }
+
+        if (this.settings.idleOverlay!.value) {
+            this.idleOverlay.show();
+        }
+
+        this.soundManager.playSound(
+            idleSound,
+            (this.settings.volume!.value as number) / 100
+        );
     }
 }
 
